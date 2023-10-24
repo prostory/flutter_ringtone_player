@@ -18,6 +18,20 @@ export 'ios_sounds.dart';
 ///
 /// On Android it uses system default sounds for each ringtone type. On iOS it
 /// uses some hardcoded values for each type.
+enum AndroidStreamType {
+  voiceCall(0),
+  system(1),
+  ring(2),
+  music(3),
+  alarm(4),
+  notification(5);
+
+  final int value;
+
+  const AndroidStreamType(this.value);
+}
+
+
 class FlutterRingtonePlayer {
   static const MethodChannel _channel =
       MethodChannel('flutter_ringtone_player');
@@ -38,7 +52,7 @@ class FlutterRingtonePlayer {
       String? fromAsset,
       double? volume,
       bool? looping,
-      bool? asAlarm}) async {
+        AndroidStreamType? streamType}) async {
     if (fromAsset == null && android == null && ios == null) {
       throw "Please specify the sound source.";
     }
@@ -59,7 +73,7 @@ class FlutterRingtonePlayer {
       if (fromAsset != null) args['uri'] = fromAsset;
       if (looping != null) args['looping'] = looping;
       if (volume != null) args['volume'] = volume;
-      if (asAlarm != null) args['asAlarm'] = asAlarm;
+      if (streamType != null) args['streamType'] = streamType.value;
 
       _channel.invokeMethod('play', args);
     } on PlatformException {}
@@ -67,33 +81,33 @@ class FlutterRingtonePlayer {
 
   /// Play default alarm sound (looping on Android)
   static Future<void> playAlarm(
-          {double? volume, bool looping = true, bool asAlarm = true}) async =>
+          {double? volume, bool looping = true, AndroidStreamType streamType = AndroidStreamType.alarm}) async =>
       play(
           android: AndroidSounds.alarm,
           ios: IosSounds.alarm,
           volume: volume,
           looping: looping,
-          asAlarm: asAlarm);
+          streamType: streamType);
 
   /// Play default notification sound
   static Future<void> playNotification(
-          {double? volume, bool? looping, bool asAlarm = false}) async =>
+          {double? volume, bool? looping, AndroidStreamType streamType = AndroidStreamType.alarm}) async =>
       play(
           android: AndroidSounds.notification,
           ios: IosSounds.triTone,
           volume: volume,
           looping: looping,
-          asAlarm: asAlarm);
+          streamType: streamType);
 
   /// Play default system ringtone (looping on Android)
   static Future<void> playRingtone(
-          {double? volume, bool looping = true, bool asAlarm = false}) async =>
+          {double? volume, bool looping = true, AndroidStreamType streamType = AndroidStreamType.alarm}) async =>
       play(
           android: AndroidSounds.ringtone,
           ios: IosSounds.electronic,
           volume: volume,
           looping: looping,
-          asAlarm: asAlarm);
+          streamType: streamType);
 
   /// Stop looping sounds like alarms & ringtones on Android.
   /// This is no-op on iOS.
