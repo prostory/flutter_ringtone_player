@@ -1,4 +1,4 @@
-package com.prostory.one_moment_alarm;
+package io.inway.ringtone.player;
 
 
 import android.app.Activity;
