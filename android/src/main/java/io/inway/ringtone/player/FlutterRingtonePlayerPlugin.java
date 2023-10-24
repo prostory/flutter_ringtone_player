@@ -1,6 +1,7 @@
-package io.inway.ringtone.player;
+package com.prostory.one_moment_alarm;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.Ringtone;
@@ -11,7 +12,11 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
+import java.lang.ref.WeakReference;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -22,15 +27,38 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 /**
  * FlutterRingtonePlayerPlugin
  */
-public class FlutterRingtonePlayerPlugin implements MethodCallHandler, FlutterPlugin {
+public class FlutterRingtonePlayerPlugin implements MethodCallHandler, FlutterPlugin, ActivityAware {
     private Context context;
     private MethodChannel methodChannel;
     private RingtoneManager ringtoneManager;
     private Ringtone ringtone;
 
+    private WeakReference<Activity> activity;
+    private AudioManager audioManager;
+
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
         onAttachedToEngine(binding.getApplicationContext(), binding.getBinaryMessenger());
+    }
+
+    @Override
+    public void onAttachedToActivity(ActivityPluginBinding binding) {
+        activity = new WeakReference<>(binding.getActivity());
+    }
+
+    @Override
+    public void onDetachedFromActivity() {
+        activity = null;
+    }
+
+    @Override
+    public void onReattachedToActivityForConfigChanges(ActivityPluginBinding binding) {
+        activity = new WeakReference<>(binding.getActivity());
+    }
+
+    @Override
+    public void onDetachedFromActivityForConfigChanges() {
+        activity = null;
     }
 
     private void onAttachedToEngine(Context applicationContext, BinaryMessenger messenger) {
@@ -118,6 +146,16 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler, FlutterPl
                     */
                     if (asAlarm) {
                         ringtone.setStreamType(AudioManager.STREAM_ALARM);
+                    }
+                }
+
+                if (call.hasArgument("streamType")) {
+                    final int streamType = call.argument("streamType");
+                    if (streamType >= AudioManager.STREAM_VOICE_CALL && streamType <= AudioManager.STREAM_ACCESSIBILITY) {
+                        if (this.activity != null && this.activity.get() != null) {
+                            this.activity.get().setVolumeControlStream(streamType);
+                        }
+                        ringtone.setStreamType(streamType);
                     }
                 }
 
